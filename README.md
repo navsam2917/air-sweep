@@ -2,14 +2,14 @@
 A lightweight macOS menu-bar utility to reclaim 50–150+ GB of developer storage by safely purging runaway AI editor state (Cursor), package caches (uv/npm), and unpruned communication containers without touching your code or configs.
 
 
-# 🧹 Mac DevCleaner
+# 🧹 air-sweep
 
 > **Zero-risk, one-click disk space reclamation for macOS developers.**  
 > Recover 50–150+ GB of disk space from runaway AI editor databases, package manager caches, and communication containers without touching your source code, active Git repos, or IDE settings.
 
 ---
 
-### Why DevCleaner?
+### Why air-sweep?
 
 Traditional Mac cleanup tools (`CleanMyMac`, `ncdu`, or basic cache wipers) fall short for developers:
 - They flag active project dependencies (`node_modules`, `.venv`) that you actually need.
@@ -17,7 +17,7 @@ Traditional Mac cleanup tools (`CleanMyMac`, `ncdu`, or basic cache wipers) fall
 - They overlook sandboxed communication media hoarders (like WhatsApp caching 50–100 GB in `Group Containers`).
 - They leave modern Python wheel stores (like `uv`) unpruned.
 
-**DevCleaner** sits quietly in your macOS menu bar via SwiftBar, giving you real-time visibility into reclaimable developer bloat and letting you purge safe targets with a single click.
+**air-sweep** sits quietly in your macOS menu bar via SwiftBar, giving you real-time visibility into reclaimable developer bloat and letting you purge safe targets with a single click.
 
 ---
 
