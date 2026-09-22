@@ -9,7 +9,7 @@
 
 set -u
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 CLI="${AIR_SWEEP_CLI:-$SCRIPT_DIR/bin/air-sweep}"
 HOME_DIR=${HOME:?HOME must be set}
 WA_MEDIA="$HOME_DIR/Library/Group Containers/group.net.whatsapp.WhatsApp.shared/Message/Media"
