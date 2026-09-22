@@ -2,8 +2,9 @@
 
 # <bitbar.title>air-sweep</bitbar.title>
 # <bitbar.version>v1.0.0</bitbar.version>
-# <bitbar.author>air-sweep contributors</bitbar.author>
-# <bitbar.desc>Audit and safely purge developer caches on macOS.</bitbar.desc>
+# <bitbar.author>Akshansh Kashyap</bitbar.author>
+# <bitbar.author.github>navsam2917</bitbar.author.github>
+# <bitbar.desc>Reclaim developer storage by safely purging AI editor databases, package stores, and WhatsApp containers.</bitbar.desc>
 # <bitbar.dependencies>bash, swiftbar</bitbar.dependencies>
 
 set -u
