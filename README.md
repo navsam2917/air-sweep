@@ -1,11 +1,11 @@
 # air-sweep
-A lightweight macOS menu-bar utility to reclaim 50–150+ GB of developer storage by safely purging runaway AI editor state (Cursor), package caches (uv/npm), and unpruned communication containers without touching your code or configs.
+
+A SwiftBar plugin and standalone POSIX CLI for reclaiming developer storage on Apple Silicon Macs. It targets runaway AI editor state, package caches, and communication media without touching project files or configuration.
 
 
 # 🧹 air-sweep
 
-> **Zero-risk, one-click disk space reclamation for macOS developers.**  
-> Recover 50–150+ GB of disk space from runaway AI editor databases, package manager caches, and communication containers without touching your source code, active Git repos, or IDE settings.
+> **See what is taking space. Purge only the caches you choose.**
 
 ---
 
@@ -17,7 +17,24 @@ Traditional Mac cleanup tools (`CleanMyMac`, `ncdu`, or basic cache wipers) fall
 - They overlook sandboxed communication media hoarders (like WhatsApp caching 50–100 GB in `Group Containers`).
 - They leave modern Python wheel stores (like `uv`) unpruned.
 
-**air-sweep** sits quietly in your macOS menu bar via SwiftBar, giving you real-time visibility into reclaimable developer bloat and letting you purge safe targets with a single click.
+**air-sweep** sits in your macOS menu bar via SwiftBar, while the same cleanup policy is available from `bin/air-sweep` for scripts and remote shells.
+
+### Install
+
+Install SwiftBar and air-sweep with Homebrew already present:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/navsam2917/air-sweep/main/install.sh | bash
+```
+
+Or clone the repository and run the CLI directly:
+
+```sh
+./bin/air-sweep audit
+./bin/air-sweep clean devtools --yes
+```
+
+The menu-bar plugin refreshes every hour. Its cleanup actions call the same CLI and pass `--yes` only after you explicitly choose an action.
 
 ---
 
@@ -30,3 +47,25 @@ Traditional Mac cleanup tools (`CleanMyMac`, `ncdu`, or basic cache wipers) fall
 | **Python Tooling (`uv`)** | 10–25 GB | Cached wheel archives and build artifacts | Active project virtual environments (`.venv`) |
 | **Node CLI Tools** | 2–5 GB | Ephemeral `npx` runtimes and package download caches | Project source code and local dependencies |
 | **User System Caches** | 5–15 GB | Ephemeral scratchpads and browser webview dumps | User preferences and app credentials |
+
+### Safety boundary
+
+The cleaner never searches project directories and never removes source code, Git branches, `.venv` directories, IDE extensions, keybindings, settings, or credentials. It removes only the exact cache locations listed above. WhatsApp cleanup removes downloaded media contents, not chat databases. Cursor cleanup removes its global state database and ephemeral caches; close Cursor first if it is running.
+
+Run `air-sweep audit` before cleaning. The CLI is read-only by default, and direct cleanup requires `--yes`. The broadest action, `app-caches`, is separate so it cannot be swept in accidentally by a package-cache command.
+
+### Targets
+
+| Command | Scope |
+| :--- | :--- |
+| `clean whatsapp --yes` | Downloaded WhatsApp media |
+| `clean cursor --yes` | Cursor `state.vscdb` companions, backup, Cache, and GPUCache |
+| `clean devtools --yes` | uv, npm download metadata, and npx caches |
+| `clean app-caches --yes` | Contents of `~/Library/Caches` |
+| `clean all --yes` | All targets, including app caches |
+
+### Development
+
+The scripts are intentionally dependency-light. `bin/air-sweep` uses macOS `/bin/sh`; the SwiftBar plugin and installer use Bash. On macOS, run `shellcheck bin/air-sweep air-sweep.1h.sh install.sh` if ShellCheck is installed.
+
+Contributions are welcome, especially real-world path reports across macOS app versions and a short SwiftBar screen recording showing the audit and a cleanup action.

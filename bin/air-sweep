@@ -1,0 +1,142 @@
+#!/bin/sh
+set -eu
+
+APP_NAME="air-sweep"
+HOME_DIR=${HOME:?HOME must be set}
+
+WA_MEDIA="$HOME_DIR/Library/Group Containers/group.net.whatsapp.WhatsApp.shared/Message/Media"
+CURSOR_STORAGE="$HOME_DIR/Library/Application Support/Cursor/User/globalStorage"
+CURSOR_DB="$CURSOR_STORAGE/state.vscdb"
+CURSOR_CACHE="$HOME_DIR/Library/Application Support/Cursor/Cache"
+CURSOR_GPU_CACHE="$HOME_DIR/Library/Application Support/Cursor/GPUCache"
+UV_CACHE=${UV_CACHE_DIR:-"$HOME_DIR/.cache/uv"}
+NPM_CACHE=${NPM_CONFIG_CACHE:-"$HOME_DIR/.npm"}
+NPX_CACHE="$HOME_DIR/.npm/_npx"
+USER_CACHES="$HOME_DIR/Library/Caches"
+
+usage() {
+    cat <<EOF
+Usage: $APP_NAME [audit] | clean TARGET [--yes]
+
+Targets:
+  whatsapp    Remove downloaded WhatsApp media only
+  cursor      Remove Cursor's global state database and ephemeral caches
+  devtools    Clean uv and npm download caches
+  app-caches  Remove contents of ~/Library/Caches
+  all         Run every target above
+
+The clean command is a no-op without --yes. Use audit to inspect sizes first.
+EOF
+}
+
+die() {
+    printf '%s\n' "$APP_NAME: $*" >&2
+    exit 1
+}
+
+size_of() {
+    if [ -e "$1" ] || [ -d "$1" ]; then
+        du -sh "$1" 2>/dev/null | awk '{print $1}'
+    else
+        printf '0B\n'
+    fi
+}
+
+remove_contents() {
+    directory=$1
+    case "$directory" in
+        "$HOME_DIR"/*) ;;
+        *) die "refusing to clean an untrusted path: $directory" ;;
+    esac
+
+    [ -d "$directory" ] || return 0
+    for entry in "$directory"/* "$directory"/.[!.]* "$directory"/..?*; do
+        [ -e "$entry" ] || [ -L "$entry" ] || continue
+        rm -rf "$entry"
+    done
+}
+
+remove_file() {
+    file=$1
+    case "$file" in
+        "$HOME_DIR"/*) ;;
+        *) die "refusing to remove an untrusted path: $file" ;;
+    esac
+    [ -e "$file" ] || [ -L "$file" ] || return 0
+    rm -f "$file"
+}
+
+audit() {
+    printf '%s\n' "air-sweep storage audit"
+    printf '%-24s %s\n' "WhatsApp media" "$(size_of "$WA_MEDIA")"
+    printf '%-24s %s\n' "Cursor state database" "$(size_of "$CURSOR_DB")"
+    printf '%-24s %s\n' "uv cache" "$(size_of "$UV_CACHE")"
+    printf '%-24s %s\n' "npm cache" "$(size_of "$NPM_CACHE")"
+    printf '%-24s %s\n' "macOS app caches" "$(size_of "$USER_CACHES")"
+}
+
+confirm() {
+    [ "${CONFIRMED:-0}" = 1 ] || die "cleaning requires --yes; run '$APP_NAME audit' first"
+}
+
+clean_whatsapp() {
+    printf '%s\n' "Cleaning WhatsApp media: $WA_MEDIA"
+    remove_contents "$WA_MEDIA"
+}
+
+clean_cursor() {
+    printf '%s\n' "Cleaning Cursor state and ephemeral caches"
+    remove_file "$CURSOR_DB"
+    remove_file "$CURSOR_DB.backup"
+    remove_file "$CURSOR_DB-shm"
+    remove_file "$CURSOR_DB-wal"
+    remove_contents "$CURSOR_CACHE"
+    remove_contents "$CURSOR_GPU_CACHE"
+}
+
+clean_devtools() {
+    printf '%s\n' "Cleaning uv and npm caches"
+    if command -v uv >/dev/null 2>&1; then
+        uv cache clean
+    else
+        printf '%s\n' "uv is not installed; skipping uv cache command"
+    fi
+    remove_contents "$NPX_CACHE"
+    remove_contents "$NPM_CACHE/_cacache"
+    remove_contents "$NPM_CACHE/_logs"
+}
+
+clean_app_caches() {
+    printf '%s\n' "Cleaning macOS app caches: $USER_CACHES"
+    remove_contents "$USER_CACHES"
+}
+
+clean_target() {
+    target=$1
+    confirm
+    case "$target" in
+        whatsapp) clean_whatsapp ;;
+        cursor) clean_cursor ;;
+        devtools) clean_devtools ;;
+        app-caches) clean_app_caches ;;
+        all)
+            clean_whatsapp
+            clean_cursor
+            clean_devtools
+            clean_app_caches
+            ;;
+        *) usage; die "unknown target: $target" ;;
+    esac
+}
+
+case "${1:-audit}" in
+    audit) audit ;;
+    clean)
+        [ $# -ge 2 ] || { usage; exit 2; }
+        [ "${3:-}" = "--yes" ] || { usage; exit 2; }
+        CONFIRMED=1
+        clean_target "$2"
+        ;;
+    -h|--help) usage ;;
+    *) usage; exit 2 ;;
+esac
